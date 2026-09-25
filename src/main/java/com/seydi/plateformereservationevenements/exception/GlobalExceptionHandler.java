@@ -76,25 +76,11 @@ public class GlobalExceptionHandler {
         );
     }
 
-    //SI le role est incorrect
+    // Si le rôle de l'utilisateur est incorrect
     @ExceptionHandler(RoleInvalideException.class)
-    public ResponseEntity<ApiError> gererEventIntrouvable(RoleInvalideException ex){
-
-        ApiError erreur = new ApiError(
-                ex.getMessage(),
-                HttpStatus.NOT_FOUND.value(),
-                LocalDateTime.now()
-        );
-
-        return new ResponseEntity<>(
-                erreur,
-                HttpStatus.NOT_FOUND
-        );
-    }
-
-    //Si l'evenement est introuvable
-    @ExceptionHandler(EventNotFoundException.class)
-    public ResponseEntity<ApiError> gererRoleIncorrect(EventNotFoundException ex){
+    public ResponseEntity<ApiError> gererRoleIncorrect(
+            RoleInvalideException ex
+    ) {
 
         ApiError erreur = new ApiError(
                 ex.getMessage(),
@@ -105,6 +91,24 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(
                 erreur,
                 HttpStatus.CONFLICT
+        );
+    }
+
+    // Si l'événement est introuvable
+    @ExceptionHandler(EventNotFoundException.class)
+    public ResponseEntity<ApiError> gererEventIntrouvable(
+            EventNotFoundException ex
+    ) {
+
+        ApiError erreur = new ApiError(
+                ex.getMessage(),
+                HttpStatus.NOT_FOUND.value(),
+                LocalDateTime.now()
+        );
+
+        return new ResponseEntity<>(
+                erreur,
+                HttpStatus.NOT_FOUND
         );
     }
 
