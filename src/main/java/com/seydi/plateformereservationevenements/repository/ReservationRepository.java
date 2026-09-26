@@ -23,4 +23,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             @Param("statuts") List<StatutReservation> statuts,
             @Param("nouveauStatut") StatutReservation nouveauStatut
     );
+
+    List<Reservation> findByParticipantId(Long participantId);
 }

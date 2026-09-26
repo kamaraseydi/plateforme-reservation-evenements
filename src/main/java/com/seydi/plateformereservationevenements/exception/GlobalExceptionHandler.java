@@ -76,6 +76,21 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(PlaceNotFoundException.class)
+    public ResponseEntity<ApiError> gererPlaceIntrouvable(PlaceNotFoundException ex){
+
+        ApiError erreur = new ApiError(
+                ex.getMessage(),
+                HttpStatus.NOT_FOUND.value(),
+                LocalDateTime.now()
+        );
+
+        return new ResponseEntity<>(
+                erreur,
+                HttpStatus.NOT_FOUND
+        );
+    }
+
     // Si le rôle de l'utilisateur est incorrect
     @ExceptionHandler(RoleInvalideException.class)
     public ResponseEntity<ApiError> gererRoleIncorrect(
@@ -138,5 +153,20 @@ public class GlobalExceptionHandler {
         );
 
         return new ResponseEntity<>(erreur, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(ReservationException.class)
+    public ResponseEntity<ApiError> handleReservationException(
+            ReservationException ex
+    ) {
+        ApiError error = new ApiError(
+                ex.getMessage(),
+                HttpStatus.CONFLICT.value(),
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(error);
     }
 }
