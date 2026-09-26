@@ -48,18 +48,23 @@ public class SalleService {
                 .toList();
     }
 
+    private User trouverUserOuLeverException(String supabaseUserId){
+        return userRepository.findBySupabaseUserId(supabaseUserId)
+                .orElseThrow(() -> new UserNotFoundException("Utilisateur introuvable : " + supabaseUserId));
+    }
+
+    private Salle trouverSalleOuLeverException(Long id){
+        return salleRepository.findById(id)
+                .orElseThrow(() -> new SalleNotFoundException("Salle introuvable"));
+    }
+
     @Transactional
     public SalleResponse creerSalle(
             CreateSalleRequest request,
             String supabaseUserId
     ) {
 
-        User user = userRepository.findBySupabaseUserId(supabaseUserId)
-                .orElseThrow(() ->
-                        new UserNotFoundException(
-                                "Utilisateur introuvable"
-                        )
-                );
+        User user = trouverUserOuLeverException(supabaseUserId);
 
         if (user.getRole() != Role.ADMIN) {
             throw new RoleInvalideException(
@@ -93,12 +98,7 @@ public class SalleService {
             String supabaseUserId
     ) {
 
-        User user = userRepository.findBySupabaseUserId(supabaseUserId)
-                .orElseThrow(() ->
-                        new UserNotFoundException(
-                                "Utilisateur introuvable"
-                        )
-                );
+        User user = trouverUserOuLeverException(supabaseUserId);
 
         if (user.getRole() != Role.ADMIN) {
             throw new RoleInvalideException(
@@ -106,12 +106,7 @@ public class SalleService {
             );
         }
 
-        Salle salle = salleRepository.findById(salleId)
-                .orElseThrow(() ->
-                        new SalleNotFoundException(
-                                "Salle introuvable"
-                        )
-                );
+        Salle salle = trouverSalleOuLeverException(salleId);
 
         salleMapper.updateEntity(request, salle);
 
@@ -126,12 +121,7 @@ public class SalleService {
             String supabaseUserId
     ) {
 
-        User user = userRepository.findBySupabaseUserId(supabaseUserId)
-                .orElseThrow(() ->
-                        new UserNotFoundException(
-                                "Utilisateur introuvable"
-                        )
-                );
+        User user = trouverUserOuLeverException(supabaseUserId);
 
         if (user.getRole() != Role.ADMIN) {
             throw new RoleInvalideException(
@@ -139,12 +129,7 @@ public class SalleService {
             );
         }
 
-        Salle salle = salleRepository.findById(salleId)
-                .orElseThrow(() ->
-                        new SalleNotFoundException(
-                                "Salle introuvable"
-                        )
-                );
+        Salle salle = trouverSalleOuLeverException(salleId);
 
         salleRepository.delete(salle);
     }
