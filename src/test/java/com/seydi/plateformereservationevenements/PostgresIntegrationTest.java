@@ -25,7 +25,9 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
+import com.seydi.plateformereservationevenements.dto.response.EventResponse;
+import com.seydi.plateformereservationevenements.service.EventService;
+import com.seydi.plateformereservationevenements.model.StatutReservation;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.concurrent.*;
@@ -64,6 +66,9 @@ class PostgresIntegrationTest {
 
     @Autowired
     private ReservationRepository reservationRepository;
+
+    @Autowired
+    private EventService eventService;
 
     @BeforeEach
     void nettoyerBase() {
@@ -345,5 +350,132 @@ class PostgresIntegrationTest {
                 .count();
 
         assertEquals(1, reservationsActives);
+    }
+
+    @Test
+    void annulerEvent_doitAnnulerLesReservationsActives() {
+
+        // 1. Création des utilisateurs
+        User organisateur = creerUtilisateur(
+                "organisateur-789",
+                "organisateur3@test.com",
+                "Organisateur 3",
+                Role.ORGANISATEUR
+        );
+
+        User participant1 = creerUtilisateur(
+                "participant-5",
+                "participant5@test.com",
+                "Participant 5",
+                Role.PARTICIPANT
+        );
+
+        User participant2 = creerUtilisateur(
+                "participant-6",
+                "participant6@test.com",
+                "Participant 6",
+                Role.PARTICIPANT
+        );
+
+        // 2. Création de la salle
+        Salle salle = new Salle();
+        salle.setNom("Salle Annulation Event");
+        salle.setAdresse("Dakar");
+        salle.setCapacite(2);
+        salle.setCreatedAt(OffsetDateTime.now());
+
+        salle = salleRepository.saveAndFlush(salle);
+
+        // 3. Création des places
+        Place place1 = new Place();
+        place1.setNumero("A1");
+        place1.setSalle(salle);
+
+        place1 = placeRepository.saveAndFlush(place1);
+
+        Place place2 = new Place();
+        place2.setNumero("A2");
+        place2.setSalle(salle);
+
+        place2 = placeRepository.saveAndFlush(place2);
+
+        // 4. Création de l'événement
+        Event event = new Event();
+        event.setTitre("Concert Annulation Event");
+        event.setDescription("Test annulation des réservations");
+        event.setDateHeure(OffsetDateTime.now().plusDays(10));
+        event.setStatut(StatutEvent.PUBLIE);
+        event.setOrganisateur(organisateur);
+        event.setSalle(salle);
+        event.setCreatedAt(OffsetDateTime.now());
+
+        event = eventRepository.saveAndFlush(event);
+
+        // 5. Première réservation
+        CreateReservationRequest request1 = new CreateReservationRequest();
+        request1.setPlaceId(place1.getId());
+
+        ReservationResponse reservation1 =
+                reservationService.creerReservation(
+                        event.getId(),
+                        request1,
+                        participant1.getSupabaseUserId()
+                );
+
+        assertEquals("EN_ATTENTE", reservation1.getStatut());
+
+        // 6. Deuxième réservation
+        CreateReservationRequest request2 = new CreateReservationRequest();
+        request2.setPlaceId(place2.getId());
+
+        ReservationResponse reservation2 =
+                reservationService.creerReservation(
+                        event.getId(),
+                        request2,
+                        participant2.getSupabaseUserId()
+                );
+
+        assertEquals("EN_ATTENTE", reservation2.getStatut());
+
+        // 7. On simule une réservation CONFIRMEE
+        Reservation reservationConfirmee =
+                reservationRepository.findById(reservation2.getId())
+                        .orElseThrow();
+
+        reservationConfirmee.setStatut(StatutReservation.CONFIRMEE);
+
+        reservationRepository.saveAndFlush(reservationConfirmee);
+
+        // 8. Annulation de l'événement
+        EventResponse eventAnnule =
+                eventService.annulerEvent(
+                        event.getId(),
+                        organisateur.getSupabaseUserId()
+                );
+
+        // 9. Vérifier que l'événement est annulé
+        assertEquals(
+                StatutEvent.ANNULE,
+                eventAnnule.getStatut()
+        );
+
+        // 10. Vérifier les réservations
+        Reservation reservation1EnBase =
+                reservationRepository.findById(reservation1.getId())
+                        .orElseThrow();
+
+        Reservation reservation2EnBase =
+                reservationRepository.findById(reservation2.getId())
+                        .orElseThrow();
+
+        assertEquals(
+                StatutReservation.ANNULEE,
+                reservation1EnBase.getStatut()
+        );
+
+        assertEquals(
+                StatutReservation.ANNULEE,
+                reservation2EnBase.getStatut()
+        );
     }
 }
