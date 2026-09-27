@@ -26,6 +26,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     List<Reservation> findByParticipantId(Long participantId);
 
+    List<Reservation> findByEventId(Long eventId);
     List<Reservation> findByEventIdAndStatutIn(
             Long eventId,
             List<StatutReservation> statuts

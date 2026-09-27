@@ -2,6 +2,7 @@ package com.seydi.plateformereservationevenements.controller;
 
 import com.seydi.plateformereservationevenements.config.SecurityConfig;
 import com.seydi.plateformereservationevenements.dto.request.CreateReservationRequest;
+import com.seydi.plateformereservationevenements.dto.response.EventReservationResponse;
 import com.seydi.plateformereservationevenements.dto.response.ReservationResponse;
 import com.seydi.plateformereservationevenements.exception.EventNotFoundException;
 import com.seydi.plateformereservationevenements.exception.ReservationException;
@@ -13,11 +14,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.json.JsonMapper;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -181,7 +186,7 @@ class ReservationControllerTest {
 
 
     @Test
-    void creerReservation_roleInvalide_devraitRetourner409()
+    void creerReservation_roleInvalide_devraitRetourner403()
             throws Exception {
 
         CreateReservationRequest request =
@@ -212,7 +217,7 @@ class ReservationControllerTest {
                                         jsonMapper.writeValueAsString(request)
                                 )
                 )
-                .andExpect(status().isConflict());
+                .andExpect(status().isForbidden());
     }
 
 
@@ -390,4 +395,91 @@ class ReservationControllerTest {
                 )
                 .andExpect(status().isConflict());
     }
+
+    @Test
+    @WithMockUser
+    void listerReservationsEvenement_organisateurAuthentifie_devraitRetourner200()
+            throws Exception {
+
+        EventReservationResponse reservation =
+                new EventReservationResponse(
+                        100L,
+                        1L,
+                        "Seydi Camara",
+                        "seydi@example.com",
+                        10L,
+                        "A10",
+                        "CONFIRMEE",
+                        OffsetDateTime.now()
+                );
+
+        when(reservationService.listerReservationsEvenement(
+                10L,
+                "organisateur-123"
+        )).thenReturn(List.of(reservation));
+
+        mockMvc.perform(
+                        get("/api/events/10/reservations")
+                                .with(jwt().jwt(jwt ->
+                                        jwt.subject("organisateur-123")
+                                ))
+                )
+                .andExpect(status().isOk())
+                .andExpect(content()
+                        .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(100))
+                .andExpect(jsonPath("$[0].participantId").value(1))
+                .andExpect(jsonPath("$[0].participantNom")
+                        .value("Seydi Camara"))
+                .andExpect(jsonPath("$[0].participantEmail")
+                        .value("seydi@example.com"))
+                .andExpect(jsonPath("$[0].placeId").value(10))
+                .andExpect(jsonPath("$[0].numeroPlace").value("A10"))
+                .andExpect(jsonPath("$[0].statut").value("CONFIRMEE"));
+
+        verify(reservationService)
+                .listerReservationsEvenement(10L, "organisateur-123");
+    }
+
+    @Test
+    @WithMockUser
+    void listerReservationsEvenement_evenementInexistant_devraitRetourner404()
+            throws Exception {
+
+        when(reservationService.listerReservationsEvenement(
+                99L,
+                "organisateur-123"
+        )).thenThrow(
+                new EventNotFoundException(
+                        "Evenement introuvable : 99"
+                )
+        );
+
+        mockMvc.perform(
+                        get("/api/events/99/reservations")
+                                .with(jwt().jwt(jwt ->
+                                        jwt.subject("organisateur-123")
+                                ))
+                )
+                .andExpect(status().isNotFound());
+
+        verify(reservationService)
+                .listerReservationsEvenement(99L, "organisateur-123");
+    }
+
+    @Test
+    void listerReservationsEvenement_sansAuthentification_devraitRetourner401()
+            throws Exception {
+
+        mockMvc.perform(
+                        get("/api/events/10/reservations")
+                )
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(reservationService);
+    }
+
+
 }

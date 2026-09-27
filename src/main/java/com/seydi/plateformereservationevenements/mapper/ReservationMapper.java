@@ -1,5 +1,6 @@
 package com.seydi.plateformereservationevenements.mapper;
 
+import com.seydi.plateformereservationevenements.dto.response.EventReservationResponse;
 import com.seydi.plateformereservationevenements.dto.response.ReservationResponse;
 import com.seydi.plateformereservationevenements.model.Reservation;
 import org.springframework.stereotype.Component;
@@ -34,5 +35,18 @@ public class ReservationMapper {
         }
 
         return response;
+    }
+
+    public EventReservationResponse toEventReservationResponse(Reservation reservation) {
+        return new EventReservationResponse(
+                reservation.getId(),
+                reservation.getParticipant().getId(),
+                reservation.getParticipant().getNom(),
+                reservation.getParticipant().getEmail(),
+                reservation.getPlace().getId(),
+                reservation.getPlace().getNumero(),
+                reservation.getStatut().name(),
+                reservation.getCreatedAt()
+        );
     }
 }

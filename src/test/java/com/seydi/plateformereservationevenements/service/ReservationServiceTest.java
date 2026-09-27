@@ -1,12 +1,9 @@
 package com.seydi.plateformereservationevenements.service;
 
 import com.seydi.plateformereservationevenements.dto.request.CreateReservationRequest;
+import com.seydi.plateformereservationevenements.dto.response.EventReservationResponse;
 import com.seydi.plateformereservationevenements.dto.response.ReservationResponse;
-import com.seydi.plateformereservationevenements.exception.EventNotFoundException;
-import com.seydi.plateformereservationevenements.exception.PlaceNotFoundException;
-import com.seydi.plateformereservationevenements.exception.ReservationException;
-import com.seydi.plateformereservationevenements.exception.RoleInvalideException;
-import com.seydi.plateformereservationevenements.exception.UserNotFoundException;
+import com.seydi.plateformereservationevenements.exception.*;
 import com.seydi.plateformereservationevenements.mapper.ReservationMapper;
 import com.seydi.plateformereservationevenements.model.Event;
 import com.seydi.plateformereservationevenements.model.Place;
@@ -28,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -151,6 +149,163 @@ class ReservationServiceTest {
 
         verify(reservationMapper)
                 .toResponse(reservation);
+    }
+
+    @Test
+    void listerReservationsEvenement_organisateurProprietaire_devraitRetournerReservations() {
+
+        User organisateur = new User();
+        organisateur.setId(1L);
+        organisateur.setSupabaseUserId("organisateur-123");
+        organisateur.setRole(Role.ORGANISATEUR);
+
+        Event event = new Event();
+        event.setId(10L);
+        event.setOrganisateur(organisateur);
+
+        Reservation reservation = new Reservation();
+        reservation.setId(100L);
+
+        when(userRepository.findBySupabaseUserId("organisateur-123"))
+                .thenReturn(Optional.of(organisateur));
+
+        when(eventRepository.findById(10L))
+                .thenReturn(Optional.of(event));
+
+        when(reservationRepository.findByEventId(10L))
+                .thenReturn(List.of(reservation));
+
+        EventReservationResponse response =
+                new EventReservationResponse();
+
+        when(reservationMapper.toEventReservationResponse(reservation))
+                .thenReturn(response);
+
+        List<EventReservationResponse> result =
+                reservationService.listerReservationsEvenement(
+                        10L,
+                        "organisateur-123"
+                );
+
+        assertEquals(1, result.size());
+        assertSame(response, result.get(0));
+
+        verify(reservationRepository).findByEventId(10L);
+        verify(reservationMapper).toEventReservationResponse(reservation);
+    }
+
+    @Test
+    void listerReservationsEvenement_participant_devraitLeverRoleInvalideException() {
+
+        User participant = new User();
+        participant.setId(1L);
+        participant.setSupabaseUserId("participant-123");
+        participant.setRole(Role.PARTICIPANT);
+
+        when(userRepository.findBySupabaseUserId("participant-123"))
+                .thenReturn(Optional.of(participant));
+
+        assertThrows(
+                RoleInvalideException.class,
+                () -> reservationService.listerReservationsEvenement(
+                        10L,
+                        "participant-123"
+                )
+        );
+
+        verifyNoInteractions(eventRepository);
+        verifyNoInteractions(reservationRepository);
+    }
+
+    @Test
+    void listerReservationsEvenement_autreOrganisateur_devraitLeverAccessDeniedException() {
+
+        User organisateurConnecte = new User();
+        organisateurConnecte.setId(1L);
+        organisateurConnecte.setSupabaseUserId("organisateur-123");
+        organisateurConnecte.setRole(Role.ORGANISATEUR);
+
+        User proprietaire = new User();
+        proprietaire.setId(2L);
+        proprietaire.setSupabaseUserId("autre-organisateur");
+        proprietaire.setRole(Role.ORGANISATEUR);
+
+        Event event = new Event();
+        event.setId(10L);
+        event.setOrganisateur(proprietaire);
+
+        when(userRepository.findBySupabaseUserId("organisateur-123"))
+                .thenReturn(Optional.of(organisateurConnecte));
+
+        when(eventRepository.findById(10L))
+                .thenReturn(Optional.of(event));
+
+        assertThrows(
+                EventAccessDeniedException.class,
+                () -> reservationService.listerReservationsEvenement(
+                        10L,
+                        "organisateur-123"
+                )
+        );
+
+        verifyNoInteractions(reservationRepository);
+    }
+
+    @Test
+    void listerReservationsEvenement_evenementInexistant_devraitLeverException() {
+
+        User organisateur = new User();
+        organisateur.setId(1L);
+        organisateur.setSupabaseUserId("organisateur-123");
+        organisateur.setRole(Role.ORGANISATEUR);
+
+        when(userRepository.findBySupabaseUserId("organisateur-123"))
+                .thenReturn(Optional.of(organisateur));
+
+        when(eventRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                EventNotFoundException.class,
+                () -> reservationService.listerReservationsEvenement(
+                        99L,
+                        "organisateur-123"
+                )
+        );
+
+        verifyNoInteractions(reservationRepository);
+    }
+
+    @Test
+    void listerReservationsEvenement_sansReservation_devraitRetournerListeVide() {
+
+        User organisateur = new User();
+        organisateur.setId(1L);
+        organisateur.setSupabaseUserId("organisateur-123");
+        organisateur.setRole(Role.ORGANISATEUR);
+
+        Event event = new Event();
+        event.setId(10L);
+        event.setOrganisateur(organisateur);
+
+        when(userRepository.findBySupabaseUserId("organisateur-123"))
+                .thenReturn(Optional.of(organisateur));
+
+        when(eventRepository.findById(10L))
+                .thenReturn(Optional.of(event));
+
+        when(reservationRepository.findByEventId(10L))
+                .thenReturn(List.of());
+
+        List<EventReservationResponse> result =
+                reservationService.listerReservationsEvenement(
+                        10L,
+                        "organisateur-123"
+                );
+
+        assertTrue(result.isEmpty());
+
+        verify(reservationRepository).findByEventId(10L);
     }
 
     @Test
