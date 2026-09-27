@@ -1,7 +1,9 @@
 package com.seydi.plateformereservationevenements.service;
 
 import com.seydi.plateformereservationevenements.dto.request.CreateReservationRequest;
+import com.seydi.plateformereservationevenements.dto.response.EventReservationResponse;
 import com.seydi.plateformereservationevenements.dto.response.ReservationResponse;
+import com.seydi.plateformereservationevenements.exception.*;
 import com.seydi.plateformereservationevenements.model.Event;
 import com.seydi.plateformereservationevenements.model.Place;
 import com.seydi.plateformereservationevenements.model.Reservation;
@@ -9,11 +11,6 @@ import com.seydi.plateformereservationevenements.model.User;
 import com.seydi.plateformereservationevenements.model.Role;
 import com.seydi.plateformereservationevenements.model.StatutEvent;
 import com.seydi.plateformereservationevenements.model.StatutReservation;
-import com.seydi.plateformereservationevenements.exception.EventNotFoundException;
-import com.seydi.plateformereservationevenements.exception.PlaceNotFoundException;
-import com.seydi.plateformereservationevenements.exception.ReservationException;
-import com.seydi.plateformereservationevenements.exception.RoleInvalideException;
-import com.seydi.plateformereservationevenements.exception.UserNotFoundException;
 import com.seydi.plateformereservationevenements.mapper.ReservationMapper;
 import com.seydi.plateformereservationevenements.repository.EventRepository;
 import com.seydi.plateformereservationevenements.repository.PlaceRepository;
@@ -182,6 +179,32 @@ public class ReservationService {
         reservationRepository.save(reservation);
     }
 
+    @Transactional(readOnly = true)
+    public List<EventReservationResponse> listerReservationsEvenement(
+            Long eventId,
+            String supabaseUserId
+    ) {
+        User organisateur = trouverUserOuLeverException(supabaseUserId);
+
+        if (organisateur.getRole() != Role.ORGANISATEUR) {
+            throw new RoleInvalideException(
+                    "Seul un organisateur peut consulter les réservations d'un événement"
+            );
+        }
+
+        Event event = trouverEventOuLeverException(eventId);
+
+        if (!event.getOrganisateur().getId().equals(organisateur.getId())) {
+            throw new EventAccessDeniedException(
+                    "Vous n'êtes pas l'organisateur de cet événement"
+            );
+        }
+
+        return reservationRepository.findByEventId(eventId)
+                .stream()
+                .map(reservationMapper::toEventReservationResponse)
+                .toList();
+    }
 
 
 }

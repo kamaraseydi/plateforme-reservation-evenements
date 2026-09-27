@@ -318,7 +318,7 @@ class SalleControllerTest {
 
 
     @Test
-    void creerSalle_roleInvalide_devraitRetourner409()
+    void creerSalle_roleInvalide_devraitRetourner403()
             throws Exception {
 
         CreateSalleRequest request = new CreateSalleRequest();
@@ -342,6 +342,6 @@ class SalleControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(jsonMapper.writeValueAsString(request))
                 )
-                .andExpect(status().isConflict());
+                .andExpect(status().isForbidden());
     }
 }

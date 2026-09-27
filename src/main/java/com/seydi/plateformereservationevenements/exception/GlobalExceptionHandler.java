@@ -99,13 +99,13 @@ public class GlobalExceptionHandler {
 
         ApiError erreur = new ApiError(
                 ex.getMessage(),
-                HttpStatus.CONFLICT.value(),
+                HttpStatus.FORBIDDEN.value(),
                 LocalDateTime.now()
         );
 
         return new ResponseEntity<>(
                 erreur,
-                HttpStatus.CONFLICT
+                HttpStatus.FORBIDDEN
         );
     }
 

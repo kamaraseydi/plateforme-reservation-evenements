@@ -1,6 +1,7 @@
 package com.seydi.plateformereservationevenements.controller;
 
 import com.seydi.plateformereservationevenements.dto.request.CreateReservationRequest;
+import com.seydi.plateformereservationevenements.dto.response.EventReservationResponse;
 import com.seydi.plateformereservationevenements.dto.response.ReservationResponse;
 import com.seydi.plateformereservationevenements.service.ReservationService;
 import jakarta.validation.Valid;
@@ -67,5 +68,20 @@ public class ReservationController {
         );
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("events/{eventId}/reservations")
+    public ResponseEntity<List<EventReservationResponse>> listerReservationsEvenement(
+            @PathVariable Long eventId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        String supabaseUserId = jwt.getSubject();
+
+        return ResponseEntity.ok(
+                reservationService.listerReservationsEvenement(
+                        eventId,
+                        supabaseUserId
+                )
+        );
     }
 }
