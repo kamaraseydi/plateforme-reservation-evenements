@@ -31,33 +31,58 @@ public class Salle {
 
     public Salle() {}
 
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = OffsetDateTime.now();
+        }
+    }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getNom() { return nom; }
-    public void setNom(String nom) { this.nom = nom; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getAdresse() { return adresse; }
-    public void setAdresse(String adresse) { this.adresse = adresse; }
+    public String getNom() {
+        return nom;
+    }
 
-    public Integer getCapacite() { return capacite; }
-    public void setCapacite(Integer capacite) { this.capacite = capacite; }
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
 
-    public List<Place> getPlaces() { return places; }
-    public void setPlaces(List<Place> places) { this.places = places; }
+    public String getAdresse() {
+        return adresse;
+    }
 
-    public OffsetDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+    public void setAdresse(String adresse) {
+        this.adresse = adresse;
+    }
 
-    @Override
-    public String toString() {
-        return "Salle{" +
-                "id=" + id +
-                ", nom='" + nom + '\'' +
-                ", adresse='" + adresse + '\'' +
-                ", capacite=" + capacite +
-                ", createdAt=" + createdAt +
-                '}';
+    public Integer getCapacite() {
+        return capacite;
+    }
+
+    public void setCapacite(Integer capacite) {
+        this.capacite = capacite;
+    }
+
+    public List<Place> getPlaces() {
+        return places;
+    }
+
+    public void setPlaces(List<Place> places) {
+        this.places = places;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }
