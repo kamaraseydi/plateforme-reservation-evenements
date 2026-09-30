@@ -778,40 +778,61 @@ class ReservationServiceTest {
         verifyNoInteractions(reservationRepository);
     }
 
-    @Test
-    void creerReservation_placeDejaReservee_doitLeverReservationException() {
 
-        when(userRepository.findBySupabaseUserId("user-123"))
+    @Test
+    void creerReservation_placeDejaReservee_doitLeverReservationAlreadyExistsException() {
+        // Arrange
+        Long eventId = 1L;
+        Long placeId = 10L;
+        String supabaseUserId = "participant-123";
+
+        User participant = new User();
+        participant.setId(1L);
+        participant.setSupabaseUserId(supabaseUserId);
+        participant.setRole(Role.PARTICIPANT);
+
+        Salle salle = new Salle();
+        salle.setId(5L);
+
+        Event event = new Event();
+        event.setId(eventId);
+        event.setSalle(salle);
+        event.setStatut(StatutEvent.PUBLIE);
+
+        Place place = new Place();
+        place.setId(placeId);
+        place.setSalle(salle);
+
+        CreateReservationRequest request = new CreateReservationRequest();
+        request.setPlaceId(placeId);
+
+        when(userRepository.findBySupabaseUserId(supabaseUserId))
                 .thenReturn(Optional.of(participant));
 
-        when(eventRepository.findById(20L))
+        when(eventRepository.findById(eventId))
                 .thenReturn(Optional.of(event));
 
-        when(placeRepository.findById(30L))
+        when(placeRepository.findById(placeId))
                 .thenReturn(Optional.of(place));
 
-        when(reservationRepository.saveAndFlush(any(Reservation.class)))
-                .thenThrow(
-                        new DataIntegrityViolationException("duplicate key")
-                );
+        when(reservationRepository
+                .existsByEventIdAndPlaceIdAndStatutIn(
+                        eq(eventId),
+                        eq(placeId),
+                        anyList()
+                ))
+                .thenReturn(true);
 
-        ReservationException exception = assertThrows(
-                ReservationException.class,
+        // Act & Assert
+        assertThrows(
+                ReservationAlreadyExistsException.class,
                 () -> reservationService.creerReservation(
-                        20L,
+                        eventId,
                         request,
-                        "user-123"
+                        supabaseUserId
                 )
         );
 
-        assertEquals(
-                "Cette place est déjà réservée pour cet événement",
-                exception.getMessage()
-        );
-
-        verify(reservationRepository)
-                .saveAndFlush(any(Reservation.class));
-
-        verifyNoInteractions(reservationMapper);
+        verify(reservationRepository, never()).saveAndFlush(any());
     }
 }

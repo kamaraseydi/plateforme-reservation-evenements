@@ -31,4 +31,10 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             Long eventId,
             List<StatutReservation> statuts
     );
+
+    boolean existsByEventIdAndPlaceIdAndStatutIn(
+            Long eventId,
+            Long placeId,
+            List<StatutReservation> statuts
+    );
 }

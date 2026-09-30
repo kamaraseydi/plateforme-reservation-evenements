@@ -100,7 +100,24 @@ public class ReservationService {
             );
         }
 
-        // 7. Créer la réservation
+        // 7. Vérifier que la place n'est pas déjà réservée
+        boolean placeDejaReservee =
+                reservationRepository.existsByEventIdAndPlaceIdAndStatutIn(
+                        eventId,
+                        place.getId(),
+                        List.of(
+                                StatutReservation.EN_ATTENTE,
+                                StatutReservation.CONFIRMEE
+                        )
+                );
+
+        if (placeDejaReservee) {
+            throw new ReservationAlreadyExistsException(
+                    "Cette place est déjà réservée pour cet événement"
+            );
+        }
+
+        // 8. Créer la réservation
         Reservation reservation = new Reservation();
 
         reservation.setParticipant(participant);
@@ -113,11 +130,12 @@ public class ReservationService {
         reservation.setCreatedAt(OffsetDateTime.now());
 
         try {
+            // Protection contre une réservation concurrente
             Reservation reservationSauvegardee = reservationRepository.saveAndFlush(reservation);
             return reservationMapper.toResponse(reservationSauvegardee);
 
         } catch (DataIntegrityViolationException e) {
-            throw new ReservationException("Cette place est déjà réservée pour cet événement");
+            throw new ReservationAlreadyExistsException("Cette place est déjà réservée pour cet événement");
         }
     }
 

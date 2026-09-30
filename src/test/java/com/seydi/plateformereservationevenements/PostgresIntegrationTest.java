@@ -2,6 +2,7 @@ package com.seydi.plateformereservationevenements;
 
 import com.seydi.plateformereservationevenements.dto.request.CreateReservationRequest;
 import com.seydi.plateformereservationevenements.dto.response.ReservationResponse;
+import com.seydi.plateformereservationevenements.exception.ReservationAlreadyExistsException;
 import com.seydi.plateformereservationevenements.exception.ReservationException;
 import com.seydi.plateformereservationevenements.model.Event;
 import com.seydi.plateformereservationevenements.model.Place;
@@ -167,7 +168,7 @@ class PostgresIntegrationTest {
                         request1,
                         participant1.getSupabaseUserId()
                 );
-            } catch (ReservationException e) {
+            } catch (ReservationAlreadyExistsException e) {
                 return e;
             }
         };
@@ -182,7 +183,7 @@ class PostgresIntegrationTest {
                         request2,
                         participant2.getSupabaseUserId()
                 );
-            } catch (ReservationException e) {
+            } catch (ReservationAlreadyExistsException e) {
                 return e;
             }
         };
@@ -206,7 +207,7 @@ class PostgresIntegrationTest {
 
         long echecs = List.of(resultat1, resultat2)
                 .stream()
-                .filter(resultat -> resultat instanceof ReservationException)
+                .filter(resultat -> resultat instanceof ReservationAlreadyExistsException)
                 .count();
 
         assertEquals(1, succes);
