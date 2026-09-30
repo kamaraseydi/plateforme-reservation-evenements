@@ -23,8 +23,17 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/api/events", "/api/events/*").permitAll()
 
+                        // API publique
+                        .requestMatchers(HttpMethod.GET, "/api/events", "/api/events/*"
+                        ).permitAll()
+
+                        // Swagger / OpenAPI
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html",
+                                "/v3/api-docs/**"
+                        ).permitAll()
+
+                        // Tout le reste nécessite un JWT valide
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 ->

@@ -1,20 +1,71 @@
 package com.seydi.plateformereservationevenements.dto.response;
 
 import com.seydi.plateformereservationevenements.model.StatutEvent;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.OffsetDateTime;
 
+@Schema(description = "Informations détaillées d'un événement")
 public class EventResponse {
 
+    @Schema(
+            description = "Identifiant unique de l'événement",
+            example = "1"
+    )
     private Long id;
+
+    @Schema(
+            description = "Titre de l'événement",
+            example = "Festival de cinéma de Dakar"
+    )
     private String titre;
+
+    @Schema(
+            description = "Description de l'événement",
+            example = "Projection de films et rencontres avec les réalisateurs."
+    )
     private String description;
+
+    @Schema(
+            description = "Date et heure de l'événement",
+            example = "2027-06-15T20:00:00+02:00"
+    )
     private OffsetDateTime dateHeure;
+
+    @Schema(
+            description = "URL de l'image associée à l'événement",
+            example = "https://example.com/images/festival.jpg"
+    )
     private String imageUrl;
+
+    @Schema(
+            description = "Statut actuel de l'événement",
+            example = "PUBLIE"
+    )
     private StatutEvent statut;
+
+    @Schema(
+            description = "Nom de l'organisateur de l'événement",
+            example = "Seydi Kamara"
+    )
     private String organisateur;
+
+    @Schema(
+            description = "Nom de la salle dans laquelle se déroule l'événement",
+            example = "Grande Salle Dakar Arena"
+    )
     private String salle;
+
+    @Schema(
+            description = "Adresse de la salle",
+            example = "Diamniadio, Dakar"
+    )
     private String adresse;
+
+    @Schema(
+            description = "Date et heure de création de l'événement",
+            example = "2026-09-30T15:30:00+02:00"
+    )
     private OffsetDateTime createdAt;
 
     public EventResponse() {}
