@@ -419,7 +419,7 @@ src/
 
 ### À venir
 
-- [ ] Déploiement Railway
+- [ ] Déploiement Render
 - [ ] Supabase Storage (affiches des événements)
 - [ ] Réservation temporaire avec expiration automatique
 - [ ] Génération de billet PDF + QR Code
