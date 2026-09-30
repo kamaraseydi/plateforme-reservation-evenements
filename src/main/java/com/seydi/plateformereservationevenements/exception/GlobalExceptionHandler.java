@@ -126,6 +126,19 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(erreur, HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(SalleAlreadyExistsException.class)
+    public ResponseEntity<ApiError> gererSalleDejaExistant(
+            SalleAlreadyExistsException ex
+    ) {
+        ApiError erreur = new ApiError(
+                ex.getMessage(),
+                HttpStatus.CONFLICT.value(),
+                LocalDateTime.now()
+        );
+
+        return new ResponseEntity<>(erreur, HttpStatus.CONFLICT);
+    }
+
     //si l'evenement est daja publie erreur de le modifier
     @ExceptionHandler(EventModificationException.class)
     public ResponseEntity<ApiError> gererModificationEventImpossible(

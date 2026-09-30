@@ -3,6 +3,7 @@ package com.seydi.plateformereservationevenements.service;
 import com.seydi.plateformereservationevenements.dto.request.CreateSalleRequest;
 import com.seydi.plateformereservationevenements.dto.request.UpdateSalleRequest;
 import com.seydi.plateformereservationevenements.dto.response.SalleResponse;
+import com.seydi.plateformereservationevenements.exception.SalleAlreadyExistsException;
 import com.seydi.plateformereservationevenements.mapper.SalleMapper;
 import com.seydi.plateformereservationevenements.model.Place;
 import com.seydi.plateformereservationevenements.model.Role;
@@ -64,6 +65,12 @@ public class SalleService {
         if (user.getRole() != Role.ADMIN) {
             throw new RoleInvalideException(
                     "Seul un administrateur peut créer une salle"
+            );
+        }
+
+        if (salleRepository.existsByNom(request.getNom())) {
+            throw new SalleAlreadyExistsException(
+                    "Une salle avec le nom '" + request.getNom() + "' existe déjà"
             );
         }
 
