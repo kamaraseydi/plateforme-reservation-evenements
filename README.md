@@ -1,172 +1,124 @@
-# Plateforme de Réservation d'Événements
+# 🎫 Plateforme de Réservation d'Événements
 
-API REST backend permettant de gérer des événements, des salles, des places et des réservations.
+API REST backend de gestion d'événements culturels développée avec **Java 21** et **Spring Boot 4.1**.
 
-Le projet a été développé avec Spring Boot et met en œuvre une architecture en couches, une authentification JWT avec Supabase Auth, une persistance PostgreSQL, des migrations Flyway, une conteneurisation Docker ainsi que des tests unitaires et d'intégration avec Testcontainers.
+![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-brightgreen?logo=springboot)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue?logo=postgresql)
+![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker)
+![Tests](https://img.shields.io/badge/Tests-145%20passing-success?logo=junit5)
+![CI](https://github.com/kamaraseydi/plateforme-reservation-evenements/actions/workflows/ci.yml/badge.svg)
 
 ---
 
-## 🎯 Objectif
+## 🚀 Démarrage rapide
 
-La plateforme permet à trois types d'utilisateurs d'interagir avec le système selon leurs responsabilités :
+```bash
+git clone https://github.com/kamaraseydi/plateforme-reservation-evenements.git
+cd plateforme-reservation-evenements
+cp .env.example .env        # Renseigner les variables
+docker compose up --build
+```
 
-- **ADMIN** : gestion des salles et des places.
-- **ORGANISATEUR** : création et gestion de ses événements.
-- **PARTICIPANT** : consultation des événements publiés et réservation de places.
+API disponible sur **http://localhost:8080**
+Documentation Swagger : **http://localhost:8080/swagger-ui/index.html**
 
-Le système prend également en compte la concurrence afin d'empêcher qu'une même place soit réservée plusieurs fois pour un même événement.
+---
+
+## 📌 Présentation
+
+La plateforme permet à trois types d'utilisateurs d'interagir selon leurs responsabilités :
+
+- aux **administrateurs** de gérer les salles et leurs places
+- aux **organisateurs** de créer, publier et gérer leurs événements
+- aux **participants** de consulter les événements publiés et de réserver des places
+
+Le système garantit qu'une même place ne peut pas être réservée deux fois pour un même événement, y compris lorsque plusieurs réservations arrivent simultanément. Cette protection est assurée à la fois par la logique applicative et par une contrainte d'unicité partielle PostgreSQL.
 
 ---
 
 ## ✨ Fonctionnalités
 
 ### 👤 Utilisateurs et authentification
-
-- Authentification avec Supabase Auth.
-- Authentification des requêtes API avec JWT.
-- Gestion des rôles :
-  - `ADMIN`
-  - `ORGANISATEUR`
-  - `PARTICIPANT`
-- Synchronisation entre les utilisateurs Supabase Auth et la table `user_profile`.
+- Authentification avec Supabase Auth (JWT)
+- Trois rôles applicatifs : `ADMIN`, `ORGANISATEUR`, `PARTICIPANT`
+- Synchronisation automatique via trigger PostgreSQL entre `auth.users` et `user_profile`
 
 ### 🏢 Salles et places
-
-- Création d'une salle.
-- Modification d'une salle.
-- Suppression d'une salle.
-- Création de plusieurs places lors de la création d'une salle.
-- Gestion des places associées à une salle.
-- Unicité du numéro d'une place au sein d'une salle.
+- Création d'une salle avec toutes ses places en une seule opération
+- Modification et suppression de salles
+- Unicité du numéro de place au sein d'une salle
 
 ### 🎫 Événements
-
-- Création d'un événement par un organisateur.
-- Modification d'un événement.
-- Publication d'un événement.
-- Annulation d'un événement.
-- Consultation publique des événements.
-- Gestion de la salle associée à un événement.
-- Gestion des droits sur les événements appartenant à leur organisateur.
+- Création, modification, publication et annulation d'un événement
+- Consultation publique des événements publiés
+- Contrôle d'accès : un organisateur ne gère que ses propres événements
 
 ### 🎟️ Réservations
-
-- Réservation d'une place pour un événement.
-- Consultation de ses propres réservations.
-- Annulation d'une réservation.
-- Consultation des réservations d'un événement par son organisateur.
-- Vérification qu'une place appartient à la salle de l'événement.
-- Protection contre les doubles réservations.
-- Protection contre les doubles réservations concurrentes.
-- Conservation de l'historique des réservations annulées.
-- Annulation des réservations actives lorsqu'un événement est annulé.
+- Réservation d'une place pour un événement
+- Consultation de ses propres réservations
+- Annulation d'une réservation avec libération automatique de la place
+- Consultation des réservations d'un événement par son organisateur
+- Protection contre les doubles réservations concurrentes
+- Annulation automatique des réservations actives lors de l'annulation d'un événement
 
 ---
 
-## 🛠️ Technologies utilisées
+## 🛠️ Technologies
 
-### Backend
-
-- Java 21
-- Spring Boot 4.1.1
-- Spring Web MVC
-- Spring Data JPA
-- Spring Security
-- OAuth2 Resource Server
-- Bean Validation
-
-### Base de données
-
-- PostgreSQL 17
-- Flyway
-
-### Authentification
-
-- Supabase Auth
-- JWT
-- Spring Security OAuth2 Resource Server
-
-### Tests
-
-- JUnit 5
-- Mockito
-- Spring Boot Test
-- Testcontainers
-- PostgreSQL avec Testcontainers
-
-### Documentation API
-
-- SpringDoc OpenAPI
-- Swagger UI
-
-### Conteneurisation
-
-- Docker
-- Docker Compose
-
-### Gestion du projet
-
-- Git
-- GitHub
-- Maven
+| Couche | Technologie |
+|--------|-------------|
+| Backend | Java 21, Spring Boot 4.1.1 |
+| Sécurité | Spring Security, OAuth2 Resource Server, Supabase Auth |
+| Base de données | PostgreSQL 17, Spring Data JPA, Flyway |
+| Tests | JUnit 5, Mockito, Testcontainers |
+| Infra | Docker, Docker Compose, GitHub Actions |
+| Documentation | SpringDoc OpenAPI, Swagger UI |
 
 ---
 
 ## 🏗️ Architecture
 
-Le projet utilise une architecture backend en couches afin de séparer les responsabilités.
+Le projet utilise une architecture backend en couches afin de séparer clairement les responsabilités.
 
-```text
+```
 Client
   │
-  ▼
-Controller
+  ├── Supabase Auth → JWT
   │
   ▼
-Service
+Controller        ← validation HTTP, extraction JWT
   │
-  ├── Repository ──────► PostgreSQL
+  ▼
+Service           ← logique métier, règles, transactions
   │
-  └── Mapper
-        │
-        ▼
-       DTO
+  ├── Repository  ← accès base (Spring Data JPA)
+  │       │
+  │       ▼
+  │    PostgreSQL
+  │
+  └── Mapper      ← conversion Entité ↔ DTO
 ```
 
-### Principales couches
-
 | Couche | Responsabilité |
-|---|---|
-| Controller | Expose les endpoints REST et reçoit les requêtes HTTP |
+|--------|----------------|
+| Controller | Expose les endpoints REST |
 | Service | Contient la logique métier |
-| Repository | Assure l'accès aux données avec Spring Data JPA |
-| Model | Contient les entités persistées |
-| DTO | Définit les données échangées avec l'API |
-| Mapper | Convertit les entités en DTO |
-| Exception | Gère les erreurs métier et techniques |
-| Security | Configure la sécurité et la validation des JWT |
-
-Cette séparation facilite la maintenance, les tests et l'évolution du projet.
+| Repository | Accès aux données via Spring Data JPA |
+| Model | Entités JPA persistées |
+| DTO | Données échangées avec l'API (les entités ne sortent jamais) |
+| Mapper | Conversion Entité ↔ DTO |
+| Exception | Gestion centralisée des erreurs HTTP |
 
 ---
 
 ## 📋 Prérequis
 
-Avant de lancer le projet, les éléments suivants doivent être installés :
-
 - Java 21
-- Docker
-- Docker Compose
+- Docker Desktop (requis pour `docker compose` et les tests Testcontainers)
 - Git
 
-Maven n'a pas besoin d'être installé séparément puisque le projet utilise le Maven Wrapper (`mvnw`).
-
-Docker doit être démarré pour :
-
-- lancer PostgreSQL avec Docker Compose ;
-- exécuter les tests d'intégration avec Testcontainers.
-
-### Vérifier les installations
+Maven n'a pas besoin d'être installé — le projet utilise le Maven Wrapper (`mvnw`).
 
 ```bash
 java -version
@@ -179,215 +131,134 @@ git --version
 
 ## ⚙️ Configuration
 
-Les informations sensibles ne sont pas stockées dans le dépôt Git.
-
-La configuration utilise des variables d'environnement afin de séparer le code source des informations propres à chaque environnement.
-
-### Variables principales
-
-```text
-SPRING_DATASOURCE_URL
-SPRING_DATASOURCE_USERNAME
-SPRING_DATASOURCE_PASSWORD
-```
-
-L'URL de l'issuer Supabase utilisée pour la validation des JWT est configurée dans la configuration Spring Security.
-
----
-
-## 🔐 Fichier `.env`
-
-Le fichier `.env` contient les valeurs propres à l'environnement local et ne doit pas être versionné.
-
-Il est donc présent dans `.gitignore`.
-
-Le projet fournit un fichier `.env.example` contenant les variables nécessaires à la configuration sans exposer les valeurs sensibles.
-
-Après avoir cloné le projet, il est possible de créer son propre fichier `.env` à partir de cet exemple.
-
-### Linux / macOS
+Copier `.env.example` en `.env` et renseigner les valeurs :
 
 ```bash
+# Linux / macOS
 cp .env.example .env
-```
 
-### Windows PowerShell
-
-```powershell
+# Windows PowerShell
 Copy-Item .env.example .env
 ```
 
-Les valeurs du fichier `.env` doivent ensuite être remplacées par celles de l'environnement utilisé.
+Contenu de `.env.example` :
 
-> Ne jamais commiter le fichier `.env` ou des clés secrètes dans Git.
-
----
-
-## 🚀 Installation
-
-### 1. Cloner le projet
-
-```bash
-git clone https://github.com/kamaraseydi/plateforme-reservation-evenements.git
+```env
+SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/reservation
+SPRING_DATASOURCE_USERNAME=postgres
+SPRING_DATASOURCE_PASSWORD=votre_mot_de_passe
+SPRING_PROFILES_ACTIVE=dev
 ```
 
-Puis :
+> ⚠️ Le fichier `.env` est ignoré par Git. Ne jamais committer de secrets.
 
-```bash
-cd plateforme-reservation-evenements
-```
-
-### 2. Configurer l'environnement
-
-Créer le fichier `.env` à partir de `.env.example`.
-
-Windows PowerShell :
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Puis renseigner les valeurs nécessaires.
-
-### 3. Lancer l'application
-
-Avec Maven Wrapper :
-
-#### Windows
-
-```powershell
-.\mvnw spring-boot:run
-```
-
-#### Linux / macOS
-
-```bash
-./mvnw spring-boot:run
-```
-
-L'application utilise par défaut le port :
-
-```text
-http://localhost:8080
-```
+L'URL de l'issuer Supabase pour la validation des JWT est configurée dans `application.properties`.
 
 ---
 
 ## 🐳 Docker
 
-Le projet fournit une configuration Docker permettant de lancer l'application avec PostgreSQL.
-
-### Construire et démarrer les conteneurs
-
 ```bash
+# Lancer l'API + PostgreSQL
 docker compose up --build
-```
 
-### Démarrer en arrière-plan
-
-```bash
+# En arrière-plan
 docker compose up -d --build
-```
 
-### Arrêter les conteneurs
-
-```bash
+# Arrêter
 docker compose down
 ```
 
-### Afficher les conteneurs actifs
+PostgreSQL utilise un **volume nommé** — les données sont conservées entre les redémarrages.
+Un **healthcheck** garantit que PostgreSQL est prêt avant le démarrage de l'API.
+
+---
+
+## 💻 Développement local (sans Docker)
 
 ```bash
-docker ps
-```
+# Linux / macOS
+export SPRING_PROFILES_ACTIVE=dev
+./mvnw spring-boot:run
 
-Docker permet de reproduire l'environnement nécessaire au fonctionnement de l'application.
+# Windows PowerShell
+$env:SPRING_PROFILES_ACTIVE="dev"
+.\mvnw spring-boot:run
+```
 
 ---
 
 ## 🧪 Tests
 
-Le projet possède plusieurs niveaux de tests :
-
-- Tests des controllers.
-- Tests des services.
-- Tests des DTO.
-- Tests des mappers.
-- Tests d'intégration.
-- Tests avec PostgreSQL réel via Testcontainers.
-- Tests de concurrence sur les réservations.
-
-### Exécuter tous les tests
-
-#### Windows
-
-```powershell
-.\mvnw test
-```
-
-#### Linux / macOS
-
 ```bash
-./mvnw test
+# Linux / macOS
+./mvnw clean test
+
+# Windows
+.\mvnw clean test
 ```
 
-### Testcontainers
+**145 tests — 0 échec**
 
-Les tests d'intégration utilisent Testcontainers afin de démarrer automatiquement un conteneur PostgreSQL isolé.
+| Niveau | Nombre | Description |
+|--------|--------|-------------|
+| Validation DTOs | 37 | Bean Validation, sans contexte Spring |
+| Services | 57 | Mockito, logique métier isolée |
+| Controllers | 46 | WebMvcTest, couche HTTP et sécurité |
+| Mappers | 2 | Conversion entité ↔ DTO |
+| Intégration | 3 | Testcontainers, vrai PostgreSQL |
 
-Cela permet de tester l'application avec une véritable instance PostgreSQL plutôt qu'une base simulée.
+Le test de concurrence vérifie qu'en cas de deux réservations simultanées sur la même place, une seule est créée. La contrainte d'unicité partielle PostgreSQL est la protection finale :
 
-Le projet teste notamment le scénario suivant :
-
-```text
+```
 Deux participants
-       │
-       ├──────────────► même événement
-       │
-       └──────────────► même place
-                         │
-                         ▼
-                 Deux requêtes simultanées
-                         │
-                    ┌────┴────┐
-                    ▼         ▼
-              Réservation   Refus
-                créée      (conflit)
+      │
+      ├──► même place, même événement, même instant
+      │
+      ▼
+┌─────┴─────┐
+▼           ▼
+Réservée   Refusée
+(1 seule)  (conflit PostgreSQL)
 ```
-
-Une seule réservation peut être créée pour une même place et un même événement.
-
-La contrainte d'unicité PostgreSQL constitue la protection finale contre la double réservation concurrente.
 
 ---
 
-## 🔐 Sécurité et authentification
+## 🔐 Authentification
 
-L'authentification est assurée par Supabase Auth.
+L'authentification est assurée par **Supabase Auth**.
 
-Après authentification, le client obtient un JWT qu'il transmet à l'API :
-
-```http
+```
+Inscription
+    │
+    ▼
+Supabase crée l'utilisateur dans auth.users
+    │
+    ▼
+Trigger PostgreSQL → INSERT dans user_profile (rôle : PARTICIPANT)
+    │
+    ▼
+L'utilisateur obtient un JWT Supabase
+    │
+    ▼
 Authorization: Bearer <JWT>
+    │
+    ▼
+Spring Security valide le token (issuer-uri Supabase)
+    │
+    ▼
+sub du JWT → findBySupabaseUserId() → profil applicatif
 ```
 
-Spring Security valide le JWT grâce à OAuth2 Resource Server.
+**Trois rôles applicatifs :**
 
-L'identifiant `sub` contenu dans le JWT correspond à l'identifiant de l'utilisateur Supabase et permet de retrouver son profil applicatif dans `user_profile`.
+| Rôle | Permissions |
+|------|-------------|
+| `ADMIN` | Gestion des salles et des utilisateurs |
+| `ORGANISATEUR` | Création et gestion de ses propres événements |
+| `PARTICIPANT` | Consultation et réservation |
 
-### Rôles
-
-- `ADMIN`
-- `ORGANISATEUR`
-- `PARTICIPANT`
-
-Les permissions sont appliquées dans la logique métier.
-
-Exemples :
-
-- `ADMIN` → gestion des salles.
-- `ORGANISATEUR` → gestion de ses propres événements.
-- `PARTICIPANT` → gestion de ses propres réservations.
+Les vérifications de rôle sont appliquées dans la couche service.
 
 ---
 
@@ -396,108 +267,66 @@ Exemples :
 ### Événements
 
 | Méthode | Endpoint | Accès |
-|---|---|---|
-| GET | `/api/events` | Public |
-| GET | `/api/events/{id}` | Public |
-| POST | `/api/events` | ORGANISATEUR |
-| PUT | `/api/events/{id}` | ORGANISATEUR |
-| PATCH | `/api/events/{id}/publish` | ORGANISATEUR |
-| PATCH | `/api/events/{id}/cancel` | ORGANISATEUR |
+|---------|----------|-------|
+| `GET` | `/api/events` | Public |
+| `GET` | `/api/events/{id}` | Public |
+| `POST` | `/api/events` | ORGANISATEUR |
+| `PUT` | `/api/events/{id}` | ORGANISATEUR |
+| `PATCH` | `/api/events/{id}/publish` | ORGANISATEUR |
+| `PATCH` | `/api/events/{id}/cancel` | ORGANISATEUR |
 
 ### Salles
 
 | Méthode | Endpoint | Accès |
-|---|---|---|
-| GET | `/api/salles` | ADMIN / ORGANISATEUR |
-| POST | `/api/salles` | ADMIN |
-| PUT | `/api/salles/{id}` | ADMIN |
-| DELETE | `/api/salles/{id}` | ADMIN |
+|---------|----------|-------|
+| `GET` | `/api/salles` | ADMIN / ORGANISATEUR |
+| `POST` | `/api/salles` | ADMIN |
+| `PUT` | `/api/salles/{id}` | ADMIN |
+| `DELETE` | `/api/salles/{id}` | ADMIN |
 
 ### Places
 
 | Méthode | Endpoint | Accès |
-|---|---|---|
-| GET | `/api/events/{eventId}/seats` | Authentifié |
+|---------|----------|-------|
+| `GET` | `/api/events/{eventId}/seats` | Authentifié |
 
 ### Réservations
 
 | Méthode | Endpoint | Accès |
-|---|---|---|
-| POST | `/api/events/{eventId}/reservations` | PARTICIPANT |
-| GET | `/api/reservations/me` | PARTICIPANT |
-| PATCH | `/api/reservations/{id}/cancel` | PARTICIPANT |
-| GET | `/api/events/{eventId}/reservations` | ORGANISATEUR |
+|---------|----------|-------|
+| `POST` | `/api/events/{eventId}/reservations` | PARTICIPANT |
+| `GET` | `/api/reservations/me` | PARTICIPANT |
+| `PATCH` | `/api/reservations/{id}/cancel` | PARTICIPANT |
+| `GET` | `/api/events/{eventId}/reservations` | ORGANISATEUR |
 
----
-
-## 📖 Documentation OpenAPI / Swagger
-
-L'API est documentée avec SpringDoc OpenAPI et Swagger UI.
-
-En environnement de développement, Swagger UI est accessible à :
-
-```text
-http://localhost:8080/swagger-ui/index.html
-```
-
-La documentation OpenAPI est accessible à :
-
-```text
-http://localhost:8080/v3/api-docs
-```
-
-La documentation contient notamment :
-
-- les endpoints disponibles ;
-- les méthodes HTTP ;
-- les paramètres ;
-- les schémas des requêtes ;
-- les schémas des réponses ;
-- les règles d'authentification Bearer JWT ;
-- les codes de réponse HTTP.
-
-Swagger UI et OpenAPI sont désactivés en production.
+> La documentation complète avec corps de requêtes et réponses est disponible via Swagger.
 
 ---
 
 ## 🗄️ Base de données
 
-La base de données utilise PostgreSQL.
+Les évolutions du schéma sont gérées avec Flyway :
 
-Les évolutions du schéma sont gérées avec Flyway.
+```
+src/main/resources/db/migration/
+└── V1__creation_schema_initial.sql
+```
 
-### Principales tables
+Hibernate est configuré en mode `validate` — il vérifie que les entités correspondent au schéma sans jamais le modifier. Tout changement de schéma passe par un nouveau fichier de migration.
 
-```text
+**Principales tables :**
+
+```
 user_profile
     │
-    ├── event
-    │     │
-    │     └── salle
-    │           │
-    │           └── place
-    │
+    ├── event ──────────── salle
+    │                        │
+    │                      place
     └── reservation
           │
           ├── event
           └── place
 ```
-
-### Migrations Flyway
-
-Les migrations sont situées dans :
-
-```text
-src/main/resources/db/migration/
-```
-
-Hibernate utilise :
-
-```properties
-spring.jpa.hibernate.ddl-auto=validate
-```
-
-Hibernate vérifie donc que le modèle JPA correspond au schéma existant, tandis que Flyway est responsable de la création et de l'évolution du schéma.
 
 ---
 
@@ -505,328 +334,103 @@ Hibernate vérifie donc que le modèle JPA correspond au schéma existant, tandi
 
 ### Création et publication d'un événement
 
-```text
-ADMIN
-  │
-  └── Crée une salle
-        │
-        └── Ajoute les places
+```
+ADMIN → crée une salle et ses places
               │
               ▼
-        ORGANISATEUR
-              │
-              ├── Crée un événement
-              ├── Modifie son événement
-              └── Publie son événement
-                    │
-                    ▼
-                PARTICIPANT
-                    │
-                    ├── Consulte les événements publiés
-                    ├── Consulte les places
-                    └── Réserve une place
+    ORGANISATEUR → crée un événement → publie
+                          │
+                          ▼
+              PARTICIPANT → consulte → réserve
 ```
-
-### Réservation
-
-Lorsqu'un participant réserve une place :
-
-1. Le JWT est vérifié.
-2. Le profil utilisateur est récupéré.
-3. L'événement est vérifié.
-4. La place est vérifiée.
-5. La place doit appartenir à la salle de l'événement.
-6. Le système vérifie qu'elle n'est pas déjà réservée.
-7. La réservation est créée.
-8. PostgreSQL garantit l'unicité en cas de concurrence.
-
-### Annulation d'une réservation
-
-```text
-Réservation active
-       │
-       ▼
-   ANNULEE
-       │
-       ▼
-La place peut être
-réservée à nouveau
-```
-
-L'historique de la réservation est conservé en base.
 
 ### Annulation d'un événement
 
-```text
+```
 Événement PUBLIE
-       │
-       ▼
+    │
+    ▼
 Événement ANNULE
-       │
-       ├── EN_ATTENTE  → ANNULEE
-       │
-       └── CONFIRMEE   → ANNULEE
+    │
+    ├── Réservation EN_ATTENTE  → ANNULEE
+    └── Réservation CONFIRMEE   → ANNULEE
 ```
 
 ---
 
-## 🔒 Règles métier principales
+## 🔒 Règles métier
 
-Le système applique notamment les règles suivantes :
-
-- Un utilisateur possède un seul rôle applicatif.
-- Un participant ne peut réserver qu'en son propre nom.
-- Seul un organisateur peut créer un événement.
-- Un organisateur ne peut gérer que ses propres événements.
-- Seuls les événements publiés sont accessibles publiquement.
-- Une place appartient à une salle.
-- Une place possède un numéro unique dans sa salle.
-- Une place doit appartenir à la salle de l'événement pour pouvoir être réservée.
-- Une place ne peut avoir qu'une réservation active pour un même événement.
-- Une réservation annulée ne bloque plus la place.
-- Un participant ne peut annuler que ses propres réservations.
-- L'unicité des réservations actives est protégée au niveau PostgreSQL.
-- L'annulation d'un événement entraîne l'annulation de ses réservations actives.
+- Un utilisateur possède un seul rôle applicatif
+- Un participant ne réserve qu'en son propre nom
+- Seul un organisateur peut créer un événement
+- Un organisateur ne gère que ses propres événements
+- Seuls les événements publiés sont accessibles publiquement
+- Une place possède un numéro unique dans sa salle
+- Une place doit appartenir à la salle de l'événement pour être réservée
+- Une place ne peut avoir qu'une réservation active par événement
+- Une réservation annulée libère la place
+- Un participant ne peut annuler que ses propres réservations
+- L'annulation d'un événement annule automatiquement ses réservations actives
 
 ---
 
 ## 📁 Structure du projet
 
-```text
-plateforme-reservation-evenements/
-│
-├── .github/
-│   └── workflows/
-│
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/seydi/plateformereservationevenements/
-│   │   │       ├── config/
-│   │   │       ├── controller/
-│   │   │       ├── dto/
-│   │   │       │   ├── request/
-│   │   │       │   └── response/
-│   │   │       ├── exception/
-│   │   │       ├── mapper/
-│   │   │       ├── model/
-│   │   │       ├── repository/
-│   │   │       ├── security/
-│   │   │       └── service/
-│   │   │
-│   │   └── resources/
-│   │       ├── db/
-│   │       │   └── migration/
-│   │       ├── application.properties
-│   │       ├── application-dev.properties
-│   │       └── application-prod.properties
+```
+src/
+├── main/
+│   ├── java/com/seydi/plateformereservationevenements/
+│   │   ├── config/          ← SecurityConfig
+│   │   ├── controller/      ← EventController, SalleController...
+│   │   ├── dto/
+│   │   │   ├── request/     ← CreateEventRequest, CreateSalleRequest...
+│   │   │   └── response/    ← EventResponse, ReservationResponse...
+│   │   ├── exception/       ← GlobalExceptionHandler + exceptions métier
+│   │   ├── mapper/          ← EventMapper, ReservationMapper...
+│   │   ├── model/           ← Event, Salle, Place, Reservation, User
+│   │   ├── repository/      ← EventRepository, ReservationRepository...
+│   │   └── service/         ← EventService, ReservationService...
 │   │
-│   └── test/
-│       ├── java/
-│       └── resources/
+│   └── resources/
+│       ├── db/migration/    ← V1__creation_schema_initial.sql
+│       ├── application.properties
+│       ├── application-dev.properties
+│       └── application-prod.properties
 │
-├── .env.example
-├── .gitignore
-├── Dockerfile
-├── docker-compose.yml
-├── mvnw
-├── mvnw.cmd
-├── pom.xml
-└── README.md
+└── test/
+    ├── java/                ← 145 tests
+    └── resources/
 ```
-
----
-
-## 🔄 Gestion des environnements
-
-Le projet distingue plusieurs configurations Spring :
-
-```text
-application.properties
-application-dev.properties
-application-prod.properties
-```
-
-Les fichiers de configuration sont versionnés car ils ne contiennent pas directement les secrets.
-
-Les informations sensibles sont injectées à travers les variables d'environnement.
-
-Le fichier :
-
-```text
-.env
-```
-
-est volontairement exclu du dépôt Git.
-
-Le fichier :
-
-```text
-.env.example
-```
-
-est versionné afin d'indiquer les variables nécessaires à la configuration du projet.
-
----
-
-## 🚀 Vérification de la configuration de production
-
-Avant le déploiement, la configuration de production doit respecter les principes suivants :
-
-- Les secrets ne doivent jamais être présents dans le code source.
-- Les identifiants PostgreSQL doivent être fournis via des variables d'environnement.
-- Le profil Spring `prod` doit être utilisé.
-- Swagger UI doit être désactivé en production.
-- OpenAPI `/v3/api-docs` doit être désactivé en production.
-- PostgreSQL doit être utilisé comme base de données de production.
-- Supabase PostgreSQL constitue la base de données distante utilisée en production.
-- Flyway doit gérer les migrations de la base de données.
-- Docker doit permettre de construire et d'exécuter l'application de manière reproductible.
-
----
-
-## 🚢 Déploiement
-
-L'objectif du déploiement est d'obtenir une architecture de production similaire à :
-
-```text
-GitHub
-   │
-   ▼
-Build Maven
-   │
-   ▼
-Docker
-   │
-   ▼
-Application Spring Boot
-   │
-   ├──────────────► PostgreSQL Supabase
-   │
-   └──────────────► Supabase Auth
-                         │
-                         ▼
-                  API accessible
-                  sur Internet
-```
-
-Après le déploiement, l'application devra être vérifiée de bout en bout.
-
-### Test fonctionnel de production
-
-```text
-Inscription
-    │
-    ▼
-Supabase Auth
-    │
-    ▼
-user_profile
-    │
-    ▼
-ADMIN crée une salle
-    │
-    ▼
-ORGANISATEUR crée et publie un événement
-    │
-    ▼
-PARTICIPANT réserve une place
-    │
-    ▼
-Annulation / concurrence
-```
-
-La vérification devra confirmer notamment :
-
-- l'accès à l'API depuis Internet ;
-- la connexion à PostgreSQL Supabase ;
-- la validation des JWT Supabase ;
-- la synchronisation avec `user_profile` ;
-- le fonctionnement des rôles ;
-- les migrations Flyway ;
-- les réservations ;
-- la protection contre les doubles réservations ;
-- l'annulation des réservations ;
-- l'annulation des événements ;
-- l'absence d'exposition de Swagger/OpenAPI en production.
-
----
-
-## 🔁 CI/CD
-
-Après validation du premier déploiement, le projet pourra intégrer une pipeline CI/CD avec GitHub Actions.
-
-Le workflow visé sera :
-
-```text
-Push GitHub
-    │
-    ▼
-GitHub Actions
-    │
-    ├── Build Maven
-    │
-    ├── Tests
-    │
-    ├── Tests d'intégration
-    │
-    ├── Build Docker
-    │
-    └── Déploiement
-             │
-             ▼
-       Application en production
-```
-
-L'objectif est de vérifier automatiquement le projet avant chaque déploiement.
 
 ---
 
 ## 📌 Roadmap
 
-### MVP
+### MVP ✅
 
-- [x] Conception de l'application
-- [x] Architecture backend
-- [x] Gestion des utilisateurs et rôles
-- [x] Gestion des salles et places
-- [x] Gestion des événements
-- [x] Gestion des réservations
-- [x] Authentification Supabase
-- [x] PostgreSQL
-- [x] Flyway
-- [x] Docker
-- [x] Docker Compose
-- [x] Tests unitaires
-- [x] Tests d'intégration
-- [x] Tests de concurrence
-- [x] Testcontainers
-- [x] Documentation README
-- [x] Documentation OpenAPI / Swagger
+- [x] Architecture backend en couches
+- [x] Gestion des salles, places, événements, réservations
+- [x] Authentification Supabase Auth + trigger PostgreSQL
+- [x] Protection contre le double booking
+- [x] 163 tests (unitaires, controllers, intégration, concurrence)
+- [x] Docker + Docker Compose
+- [x] Flyway + profils dev/prod
+- [x] GitHub Actions CI
 
-### Prochaines étapes
+### À venir
 
-- [ ] Vérification finale de la configuration de production
-- [ ] Déploiement de l'application
-- [ ] Vérification de l'application déployée
-- [ ] Mise en place du CI/CD avec GitHub Actions
-- [ ] Supabase Storage
-- [ ] Fonctionnalités avancées
+- [ ] Déploiement Railway
+- [ ] Supabase Storage (affiches des événements)
+- [ ] Réservation temporaire avec expiration automatique
+- [ ] Génération de billet PDF + QR Code
+- [ ] Notifications email
 
 ---
 
 ## 👨‍💻 Auteur
 
-**Seydi Kamara**
+**Seydi Kamara** — Étudiant en Génie Logiciel (L2), ISI Keur Massar, Dakar
 
-Étudiant en Génie Logiciel.
+[![GitHub](https://img.shields.io/badge/GitHub-kamaraseydi-181717?logo=github)](https://github.com/kamaraseydi)
 
-### Technologies principales
-
-Java · Spring Boot · PostgreSQL · JPA · Flyway · Spring Security · Supabase · Docker · Testcontainers
-
----
-
-## 📄 Licence
-
-Projet personnel à vocation pédagogique et professionnelle.
+`Java` · `Spring Boot` · `PostgreSQL` · `JPA` · `Flyway` · `Spring Security` · `Supabase` · `Docker` · `Testcontainers`
