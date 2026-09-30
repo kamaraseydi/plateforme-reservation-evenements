@@ -30,7 +30,7 @@ public class ReservationMapper {
 
         if (reservation.getCreatedAt() != null) {
             response.setCreatedAt(
-                    reservation.getCreatedAt().toLocalDateTime()
+                    reservation.getCreatedAt()
             );
         }
 

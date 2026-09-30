@@ -1,16 +1,47 @@
 package com.seydi.plateformereservationevenements.dto.response;
 
-import java.time.LocalDateTime;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.OffsetDateTime;
 import java.util.List;
 
+@Schema(description = "Informations détaillées d'une salle")
 public class SalleResponse {
 
+    @Schema(
+            description = "Identifiant unique de la salle",
+            example = "9"
+    )
     private Long id;
+
+    @Schema(
+            description = "Nom de la salle",
+            example = "Grande Salle Dakar Arena"
+    )
     private String nom;
+
+    @Schema(
+            description = "Adresse de la salle",
+            example = "Diamniadio, Dakar"
+    )
     private String adresse;
+
+    @Schema(
+            description = "Capacité maximale de la salle",
+            example = "500"
+    )
     private Integer capacite;
+
+    @Schema(
+            description = "Liste des places disponibles dans la salle",
+            example = "[\"A1\", \"A2\", \"A3\", \"B1\", \"B2\", \"B3\"]"
+    )
     private List<String> places;
+
+    @Schema(
+            description = "Date et heure de création de la salle",
+            example = "2026-09-30T15:30:00+02:00"
+    )
     private OffsetDateTime createdAt;
 
     public SalleResponse() {
@@ -56,8 +87,8 @@ public class SalleResponse {
         this.places = places;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt.toLocalDateTime();
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
     }
 
     public void setCreatedAt(OffsetDateTime createdAt) {

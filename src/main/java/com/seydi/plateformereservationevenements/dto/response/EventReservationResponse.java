@@ -1,16 +1,58 @@
 package com.seydi.plateformereservationevenements.dto.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.OffsetDateTime;
 
+@Schema(description = "Informations d'une réservation consultée par l'organisateur d'un événement")
 public class EventReservationResponse {
 
+    @Schema(
+            description = "Identifiant unique de la réservation",
+            example = "42"
+    )
     private Long id;
+
+    @Schema(
+            description = "Identifiant du participant",
+            example = "12"
+    )
     private Long participantId;
+
+    @Schema(
+            description = "Nom du participant",
+            example = "Moussa Diop"
+    )
     private String participantNom;
+
+    @Schema(
+            description = "Adresse e-mail du participant",
+            example = "moussa.diop@example.com"
+    )
     private String participantEmail;
+
+    @Schema(
+            description = "Identifiant de la place réservée",
+            example = "15"
+    )
     private Long placeId;
+
+    @Schema(
+            description = "Numéro de la place réservée",
+            example = "A15"
+    )
     private String numeroPlace;
+
+    @Schema(
+            description = "Statut de la réservation",
+            example = "CONFIRMEE"
+    )
     private String statut;
+
+    @Schema(
+            description = "Date et heure de création de la réservation",
+            example = "2026-09-30T15:45:00+02:00"
+    )
     private OffsetDateTime createdAt;
 
     public EventReservationResponse() {
